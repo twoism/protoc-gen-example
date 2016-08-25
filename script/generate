@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+cd $(dirname $0)/..
+
+# remove generated files
+rm -rf generated/clients/*
+
+# build the proto-gen-example binary
+go build
+
+# generate the client using the protoc-gen-example plugin
+protoc  --plugin=protoc-gen-client=./protoc-gen-example \
+        --client_out=plugins=protoc-gen-client=:./generated/clients \
+        -I. ./protos/hello.proto
+
+# generate the protobufs
+protoc --ruby_out=./generated/clients/example/hello \
+        -I. ./protos/hello.proto

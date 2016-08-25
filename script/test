@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+cd $(dirname $0)/..
+
+ruby generated/clients/example/hello/hello_client_test.rb

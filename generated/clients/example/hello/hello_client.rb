@@ -1,4 +1,4 @@
-require "./protos/hello"
+require_relative "./protos/hello"
 
 class HelloWorldClient
   def say_hello(request)

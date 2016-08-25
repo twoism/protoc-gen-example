@@ -11,6 +11,7 @@ func GenerateAll(gen *generator.Generator) {
 			// Generate http python client and server code
 			client := ruby.New(srv, file)
 			gen.Response.File = append(gen.Response.File, client.File())
+			gen.Response.File = append(gen.Response.File, client.TestFile())
 		}
 	}
 }

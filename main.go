@@ -9,6 +9,7 @@ import (
 	"github.com/twoism/protoc-gen-example/clients"
 )
 
+// Protoc plugin boilerplate
 func main() {
 	g := generator.New()
 
@@ -27,7 +28,10 @@ func main() {
 
 	g.CommandLineParameters(g.Request.GetParameter())
 
+	// Generate the clients
 	clients.GenerateAll(g)
+
+	// Generate the protobufs
 	g.GenerateAllFiles()
 
 	data, err = proto.Marshal(g.Response)

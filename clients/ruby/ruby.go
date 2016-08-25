@@ -2,7 +2,7 @@ package ruby
 
 import (
 	"fmt"
-	"html/template"
+	"text/template"
 
 	"strings"
 
@@ -16,7 +16,7 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/plugin"
 )
 
-var ClientTemplate = `require "./protos/hello"
+var ClientTemplate = `require_relative "./protos/{{.BaseName}}"
 
 class {{.ClassName}}Client
 {{ with .Methods }}{{range .}}  def {{ .Name }}(request)
@@ -24,6 +24,24 @@ class {{.ClassName}}Client
   end{{ end }}{{ end }}
 end
 `
+
+var TestTemplate = `require 'minitest/autorun'
+require_relative './{{.BaseName}}_client'
+require_relative './protos/{{.BaseName}}'
+
+include {{.Namespace}}
+
+class TestBlog < Minitest::Test
+
+  def setup
+    @client = {{.ClassName}}Client.new
+  end
+
+{{ with .Methods }}{{range .}}  def test_{{ .Name }}
+    assert_equal @client.{{.Name}}({{.Input}}.new), {{.Output}}.new
+  end{{ end }}{{ end }}
+
+end`
 
 // Method impl for python methods
 type Method struct {
@@ -85,10 +103,33 @@ func (c *RubyClient) BaseName() string {
 
 }
 
+func (c *RubyClient) Namespace() string {
+	parts := strings.Split(c.file.GetPackage(), ".")
+
+	if len(parts) == 0 {
+		return ""
+	}
+
+	for i := 0; i < len(parts); i++ {
+		parts[i] = strings.Title(parts[i])
+	}
+
+	return strings.Join(parts, "::")
+}
+
 func (c *RubyClient) FileName() *string {
 	return proto.String(
 		fmt.Sprintf(
 			"%s/%s_client.rb", strings.Replace(c.file.GetPackage(), ".", "/", -1),
+			c.BaseName(),
+		),
+	)
+}
+
+func (c *RubyClient) TestFileName() *string {
+	return proto.String(
+		fmt.Sprintf(
+			"%s/%s_client_test.rb", strings.Replace(c.file.GetPackage(), ".", "/", -1),
 			c.BaseName(),
 		),
 	)
@@ -108,10 +149,31 @@ func (c *RubyClient) Content() *string {
 	return proto.String(buf.String())
 }
 
+func (c *RubyClient) TestContent() *string {
+	t := template.New("ruby-test-tpl")
+	tpl, err := t.Parse(TestTemplate)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	tpl.Execute(&buf, c)
+
+	return proto.String(buf.String())
+}
+
 func (c *RubyClient) File() *plugin_go.CodeGeneratorResponse_File {
 	return &plugin_go.CodeGeneratorResponse_File{
 		Content: c.Content(),
 		Name:    c.FileName(),
+	}
+}
+
+func (c *RubyClient) TestFile() *plugin_go.CodeGeneratorResponse_File {
+	return &plugin_go.CodeGeneratorResponse_File{
+		Content: c.TestContent(),
+		Name:    c.TestFileName(),
 	}
 }
 
