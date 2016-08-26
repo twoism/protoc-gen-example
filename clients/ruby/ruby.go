@@ -31,7 +31,7 @@ require_relative './protos/{{.BaseName}}'
 
 include {{.Namespace}}
 
-class TestBlog < Minitest::Test
+class Test{{.ClassName}} < Minitest::Test
 
   def setup
     @client = {{.ClassName}}Client.new

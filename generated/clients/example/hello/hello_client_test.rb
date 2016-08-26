@@ -4,7 +4,7 @@ require_relative './protos/hello'
 
 include Example::Hello
 
-class TestBlog < Minitest::Test
+class TestHelloWorld < Minitest::Test
 
   def setup
     @client = HelloWorldClient.new
